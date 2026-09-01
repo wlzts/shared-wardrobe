@@ -3,16 +3,6 @@
   "lastUpdated": "2026-09-01T00:00:00Z",
   "wardrobes": [
     {
-      "id": "demo-wardrobe-1",
-      "name": "我的衣柜",
-      "owner": "wlzts",
-      "description": "日常穿搭",
-      "coverImage": "",
-      "visibility": "private",
-      "createdAt": "2026-09-01T00:00:00Z",
-      "updatedAt": "2026-09-01T00:00:00Z"
-    },
-    {
       "id": "demo-wardrobe-2",
       "name": "TA的衣柜",
       "owner": "demo-partner",
