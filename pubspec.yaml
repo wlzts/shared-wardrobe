@@ -1,0 +1,26 @@
+name: my_closet
+description: 双设备同步的共享衣柜 App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  image_picker: ^1.0.4
+  intl: ^0.18.1
+  fl_chart: ^0.65.0
+  cached_network_image: ^3.3.0
+  path_provider: ^2.1.1
+  uuid: ^4.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
