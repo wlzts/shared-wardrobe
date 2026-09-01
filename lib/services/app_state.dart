@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,11 +20,10 @@ class AppState extends ChangeNotifier {
   String? currentWardrobeId;
   String syncStatus = '未连接';
   bool isSyncing = false;
-  bool isAdding = false; // 防重复提交锁
+  bool isAdding = false;
+  String? syncError;
 
-  // 待同步队列
-  final List<Future<void> Function()> _syncQueue = [];
-  bool _syncingQueue = false;
+  static const _syncTimeout = Duration(seconds: 30);
 
   String get username => gh.username;
   Wardrobe? get currentWardrobe =>
@@ -35,7 +35,6 @@ class AppState extends ChangeNotifier {
   List<Wardrobe> get visibleWardrobes =>
       wardrobes.where((w) => w.owner == gh.username || w.visibility == 'shared').toList();
 
-  // 可推荐的目标衣柜（共享且不是自己的）
   List<Wardrobe> get recommendableWardrobes =>
       wardrobes.where((w) => w.visibility == 'shared' && w.owner != gh.username).toList();
 
@@ -64,18 +63,24 @@ class AppState extends ChangeNotifier {
     // 加载本地缓存
     final cacheWardrobes = prefs.getString('cache_wardrobes');
     if (cacheWardrobes != null) {
-      final list = json.decode(cacheWardrobes) as List;
-      wardrobes = list.map((e) => Wardrobe.fromJson(e)).toList();
+      try {
+        final list = json.decode(cacheWardrobes) as List;
+        wardrobes = list.map((e) => Wardrobe.fromJson(e)).toList();
+      } catch (_) {}
     }
     final cacheData = prefs.getString('cache_wardrobe_data');
     if (cacheData != null) {
-      final map = json.decode(cacheData) as Map;
-      wardrobeData = map.map((k, v) => MapEntry(k, WardrobeData.fromJson(v)));
+      try {
+        final map = json.decode(cacheData) as Map;
+        wardrobeData = map.map((k, v) => MapEntry(k, WardrobeData.fromJson(v)));
+      } catch (_) {}
     }
     final cacheRecs = prefs.getString('cache_recommendations');
     if (cacheRecs != null) {
-      final list = json.decode(cacheRecs) as List;
-      recommendations = list.map((e) => Recommendation.fromJson(e)).toList();
+      try {
+        final list = json.decode(cacheRecs) as List;
+        recommendations = list.map((e) => Recommendation.fromJson(e)).toList();
+      } catch (_) {}
     }
     currentWardrobeId = prefs.getString('current_wardrobe');
     if (currentWardrobeId != null && !wardrobes.any((w) => w.id == currentWardrobeId)) {
@@ -85,7 +90,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     if (gh.isConfigured) {
       // 后台异步同步，不阻塞启动
-      _backgroundSync();
+      sync();
     }
   }
 
@@ -94,51 +99,92 @@ class AppState extends ChangeNotifier {
     return encoded.split('').reversed.join();
   }
 
-  Future<void> _backgroundSync() async {
-    if (isSyncing) return;
+  Future<void> sync() async {
+    if (isSyncing) {
+      debugPrint('Sync already in progress, skipping');
+      return;
+    }
     isSyncing = true;
+    syncError = null;
     syncStatus = '同步中...';
     notifyListeners();
+
     try {
-      await _pullAll();
-      syncStatus = '已同步 ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}';
+      await _pullAll().timeout(_syncTimeout, onTimeout: () {
+        throw TimeoutException('同步超时（${_syncTimeout.inSeconds}秒）');
+      });
+      final now = DateTime.now();
+      syncStatus = '已同步 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      syncError = null;
     } catch (e) {
+      syncError = e.toString();
       syncStatus = '同步失败: $e';
+      debugPrint('Sync failed: $e');
+    } finally {
+      isSyncing = false;
+      notifyListeners();
     }
-    isSyncing = false;
-    notifyListeners();
   }
 
-  Future<void> sync() => _backgroundSync();
-
   Future<void> _saveCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('cache_wardrobes', json.encode(wardrobes.map((e) => e.toJson()).toList()));
-    await prefs.setString(
-        'cache_wardrobe_data', json.encode(wardrobeData.map((k, v) => MapEntry(k, v.toJson()))));
-    await prefs.setString('cache_recommendations', json.encode(recommendations.map((e) => e.toJson()).toList()));
-    if (currentWardrobeId != null) await prefs.setString('current_wardrobe', currentWardrobeId!);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cache_wardrobes', json.encode(wardrobes.map((e) => e.toJson()).toList()));
+      await prefs.setString(
+          'cache_wardrobe_data', json.encode(wardrobeData.map((k, v) => MapEntry(k, v.toJson()))));
+      await prefs.setString('cache_recommendations', json.encode(recommendations.map((e) => e.toJson()).toList()));
+      if (currentWardrobeId != null) await prefs.setString('current_wardrobe', currentWardrobeId!);
+    } catch (e) {
+      debugPrint('Save cache failed: $e');
+    }
   }
 
   Future<void> _pullAll() async {
+    syncStatus = '正在获取衣柜列表...';
+    notifyListeners();
+
     final wRes = await gh.getFile('data/wardrobes.json');
     if (wRes != null) {
-      final parsed = json.decode(wRes['content']);
-      wardrobes = (parsed['wardrobes'] as List? ?? []).map((e) => Wardrobe.fromJson(e)).toList();
+      try {
+        final parsed = json.decode(wRes['content']);
+        wardrobes = (parsed['wardrobes'] as List? ?? []).map((e) => Wardrobe.fromJson(e)).toList();
+      } catch (e) {
+        debugPrint('Parse wardrobes failed: $e');
+      }
     }
+
+    syncStatus = '正在获取衣物数据 (${wardrobes.length}个衣柜)...';
+    notifyListeners();
+
     for (final w in wardrobes) {
       final res = await gh.getFile('data/wardrobes/${w.id}.json');
       if (res != null) {
-        wardrobeData[w.id] = WardrobeData.fromJson(json.decode(res['content']));
+        try {
+          wardrobeData[w.id] = WardrobeData.fromJson(json.decode(res['content']));
+        } catch (e) {
+          debugPrint('Parse wardrobe ${w.id} failed: $e');
+          if (!wardrobeData.containsKey(w.id)) {
+            wardrobeData[w.id] = WardrobeData(wardrobeId: w.id, clothes: [], outfits: [], lastUpdated: DateTime.now());
+          }
+        }
       } else if (!wardrobeData.containsKey(w.id)) {
         wardrobeData[w.id] = WardrobeData(wardrobeId: w.id, clothes: [], outfits: [], lastUpdated: DateTime.now());
       }
     }
+
+    syncStatus = '正在获取推荐数据...';
+    notifyListeners();
+
     final rRes = await gh.getFile('data/recommendations.json');
     if (rRes != null) {
-      final parsed = json.decode(rRes['content']);
-      recommendations = (parsed['recommendations'] as List? ?? []).map((e) => Recommendation.fromJson(e)).toList();
+      try {
+        final parsed = json.decode(rRes['content']);
+        recommendations = (parsed['recommendations'] as List? ?? []).map((e) => Recommendation.fromJson(e)).toList();
+      } catch (e) {
+        debugPrint('Parse recommendations failed: $e');
+      }
     }
+
     if (currentWardrobeId == null && wardrobes.isNotEmpty) {
       currentWardrobeId = wardrobes.first.id;
     }
@@ -148,8 +194,7 @@ class AppState extends ChangeNotifier {
   void switchWardrobe(String id) {
     currentWardrobeId = id;
     notifyListeners();
-    // 异步保存，不阻塞UI
-    SharedPreferences.getInstance().then((prefs) => prefs.setString('current_wardrobe', id));
+    SharedPreferences.getInstance().then((prefs) => prefs.setString('current_wardrobe', id)).catchError((_) {});
   }
 
   Future<bool> createWardrobe(String name, String description, String visibility) async {
@@ -164,19 +209,30 @@ class AppState extends ChangeNotifier {
       createdAt: now,
       updatedAt: now,
     );
-    // 本地先保存
     wardrobes.add(w);
     wardrobeData[id] = WardrobeData(wardrobeId: id, clothes: [], outfits: [], lastUpdated: now);
     currentWardrobeId = id;
     await _saveCache();
     notifyListeners();
 
-    // 后台异步同步
-    _enqueueSync(() async {
+    // 后台异步同步，不阻塞UI
+    _backgroundSave(() async {
       await _saveWardrobesFile();
       await _saveWardrobeData(id);
     });
     return true;
+  }
+
+  // 后台保存辅助方法：带超时和错误处理
+  Future<void> _backgroundSave(Future<void> Function() task) async {
+    try {
+      await task().timeout(const Duration(seconds: 30));
+    } catch (e) {
+      debugPrint('Background save failed: $e');
+      syncError = e.toString();
+      syncStatus = '保存失败: $e';
+      notifyListeners();
+    }
   }
 
   Future<void> _saveWardrobesFile() async {
@@ -198,9 +254,8 @@ class AppState extends ChangeNotifier {
     await gh.putFile(path, content, sha: existing?['sha'], message: 'update wardrobe $wardrobeId');
   }
 
-  // 添加衣物：本地优先，立即返回，后台异步同步
   Future<void> addClothe(Clothe clothe, List<int> imageBytes) async {
-    if (isAdding) return; // 防重复
+    if (isAdding) return;
     isAdding = true;
     notifyListeners();
 
@@ -209,8 +264,6 @@ class AppState extends ChangeNotifier {
       if (data == null) return;
 
       final imagePath = 'images/${clothe.id}.jpg';
-
-      // 本地先保存（用临时图片URL，同步后更新）
       final localClothe = Clothe(
         id: clothe.id,
         name: clothe.name,
@@ -218,7 +271,7 @@ class AppState extends ChangeNotifier {
         color: clothe.color,
         season: clothe.season,
         imagePath: imagePath,
-        imageUrl: '', // 同步后更新
+        imageUrl: '',
         brand: clothe.brand,
         notes: clothe.notes,
         createdAt: clothe.createdAt,
@@ -228,11 +281,8 @@ class AppState extends ChangeNotifier {
       await _saveCache();
       notifyListeners();
 
-      // 后台异步同步
-      _enqueueSync(() async {
-        // 上传图片
+      _backgroundSave(() async {
         await gh.uploadImage(imagePath, imageBytes, message: 'upload image ${clothe.id}');
-        // 更新衣物的图片URL
         final idx = data.clothes.indexWhere((c) => c.id == clothe.id);
         if (idx >= 0) {
           data.clothes[idx] = Clothe(
@@ -292,8 +342,7 @@ class AppState extends ChangeNotifier {
       await _saveCache();
       notifyListeners();
 
-      // 后台异步批量同步
-      _enqueueSync(() async {
+      _backgroundSave(() async {
         for (int i = 0; i < clothesList.length; i++) {
           final item = clothesList[i];
           final clothe = item['clothe'] as Clothe;
@@ -340,7 +389,7 @@ class AppState extends ChangeNotifier {
     await _saveCache();
     notifyListeners();
 
-    _enqueueSync(() async {
+    _backgroundSave(() async {
       if (clothe.imagePath.isNotEmpty) {
         final existing = await gh.getFile(clothe.imagePath);
         if (existing != null) {
@@ -366,10 +415,9 @@ class AppState extends ChangeNotifier {
     await _saveCache();
     notifyListeners();
 
-    _enqueueSync(() => _saveWardrobeData(currentWardrobeId!));
+    _backgroundSave(() => _saveWardrobeData(currentWardrobeId!));
   }
 
-  // 发送推荐：从自己的衣柜选衣服推荐给对方
   Future<void> sendRecommendation(String toWardrobeId, List<String> clotheIds, String message) async {
     final rec = Recommendation(
       id: 'rec-${_uuid.v4().substring(0, 8)}',
@@ -383,7 +431,7 @@ class AppState extends ChangeNotifier {
     await _saveCache();
     notifyListeners();
 
-    _enqueueSync(() => _saveRecommendationsFile());
+    _backgroundSave(() => _saveRecommendationsFile());
   }
 
   Future<void> respondRecommendation(String recId, String status, {String? outfitDate}) async {
@@ -403,7 +451,7 @@ class AppState extends ChangeNotifier {
     await _saveCache();
     notifyListeners();
 
-    _enqueueSync(() => _saveRecommendationsFile());
+    _backgroundSave(() => _saveRecommendationsFile());
   }
 
   Future<void> _saveRecommendationsFile() async {
@@ -413,33 +461,6 @@ class AppState extends ChangeNotifier {
     });
     final existing = await gh.getFile('data/recommendations.json');
     await gh.putFile('data/recommendations.json', content, sha: existing?['sha'], message: 'update recommendations');
-  }
-
-  // 同步队列：串行执行，避免并发冲突
-  void _enqueueSync(Future<void> Function() task) {
-    _syncQueue.add(task);
-    _processQueue();
-  }
-
-  Future<void> _processQueue() async {
-    if (_syncingQueue || _syncQueue.isEmpty) return;
-    _syncingQueue = true;
-    syncStatus = '后台同步中...';
-    notifyListeners();
-    try {
-      while (_syncQueue.isNotEmpty) {
-        final task = _syncQueue.removeAt(0);
-        try {
-          await task();
-        } catch (e) {
-          debugPrint('Sync task failed: $e');
-        }
-      }
-      syncStatus = '已同步 ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}';
-    } finally {
-      _syncingQueue = false;
-      notifyListeners();
-    }
   }
 
   List<Recommendation> get receivedRecommendations =>
