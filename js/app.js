@@ -50,14 +50,21 @@ const App = {
       e.preventDefault();
       this.state.deferredPrompt = e;
       if (UI.currentTab === 'settings') UI.renderTab('settings');
+      if (UI.installBanner) UI.showInstallBanner();
     });
     window.addEventListener('appinstalled', () => {
       this.state.deferredPrompt = null;
+      UI.hideInstallBanner();
       if (UI.currentTab === 'settings') UI.renderTab('settings');
     });
 
     UI.renderTab('wardrobe');
     this.updateWardrobeSwitcherLabel();
+
+    // 移动端未安装时显示安装横幅
+    if (this.isMobile() && !this.isPWAInstalled()) {
+      setTimeout(() => UI.showInstallBanner(), 1200);
+    }
 
     if (GitHub.isConfigured()) {
       this.manualSync();
@@ -962,6 +969,14 @@ const App = {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   },
 
+  isWeChat() {
+    return /MicroMessenger/i.test(navigator.userAgent);
+  },
+
+  isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  },
+
   async installApp() {
     if (!this.state.deferredPrompt) {
       UI.toast('请在浏览器菜单中选择「添加到主屏幕」');
@@ -971,9 +986,12 @@ const App = {
     const { outcome } = await this.state.deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       UI.toast('安装成功，可在桌面找到共享衣柜');
+      UI.hideInstallBanner();
+    } else {
+      UI.toast('已取消，可稍后在设置中安装');
     }
     this.state.deferredPrompt = null;
-    UI.renderTab('settings');
+    if (UI.currentTab === 'settings') UI.renderTab('settings');
   },
 
   clearAllData() {
