@@ -16,6 +16,16 @@
       "updatedAt": "2026-09-01T03:20:45.188Z"
     }
   ],
-  "outfits": [],
-  "lastUpdated": "2026-09-01T03:20:47.226Z"
+  "outfits": [
+    {
+      "id": "5e92af59-accb-4912-b7bc-05cbb621ab74",
+      "date": "2026-09-01",
+      "clotheIds": [
+        "ee78ad71-ab2e-4ba0-b2dd-6a4f9e2c8a57"
+      ],
+      "notes": "",
+      "createdAt": "2026-09-01T03:21:11.532Z"
+    }
+  ],
+  "lastUpdated": "2026-09-01T03:21:11.540Z"
 }
