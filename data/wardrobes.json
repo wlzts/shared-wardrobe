@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-09-01T03:19:53.217Z",
+  "lastUpdated": "2026-09-01T03:20:13.656Z",
   "wardrobes": [
     {
       "id": "5d23a578-193f-48f0-9cfa-b49efa1deb88",
@@ -11,6 +11,16 @@
       "visibility": "shared",
       "createdAt": "2026-09-01T03:19:53.212Z",
       "updatedAt": "2026-09-01T03:19:53.212Z"
+    },
+    {
+      "id": "99b27ab5-ff03-452c-8964-1267425ac031",
+      "name": "ta的衣柜",
+      "owner": "wlzts",
+      "description": "",
+      "coverImage": "",
+      "visibility": "private",
+      "createdAt": "2026-09-01T03:20:13.652Z",
+      "updatedAt": "2026-09-01T03:20:13.652Z"
     }
   ]
 }
