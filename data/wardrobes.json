@@ -1,5 +1,16 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-09-01T00:00:00Z",
-  "wardrobes": []
+  "lastUpdated": "2026-09-01T03:19:53.217Z",
+  "wardrobes": [
+    {
+      "id": "5d23a578-193f-48f0-9cfa-b49efa1deb88",
+      "name": "我的衣柜",
+      "owner": "wlzts",
+      "description": "",
+      "coverImage": "",
+      "visibility": "shared",
+      "createdAt": "2026-09-01T03:19:53.212Z",
+      "updatedAt": "2026-09-01T03:19:53.212Z"
+    }
+  ]
 }
