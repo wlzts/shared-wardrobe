@@ -16,7 +16,8 @@ const App = {
     outfitSelectMode: false,
     editingClotheId: null,
     pendingImage: null,
-    outfitSelectDate: null
+    outfitSelectDate: null,
+    deferredPrompt: null
   },
 
   syncStatusText: '未连接',
@@ -43,6 +44,18 @@ const App = {
     }
 
     this.bindEvents();
+
+    // PWA 安装提示
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.state.deferredPrompt = e;
+      if (UI.currentTab === 'settings') UI.renderTab('settings');
+    });
+    window.addEventListener('appinstalled', () => {
+      this.state.deferredPrompt = null;
+      if (UI.currentTab === 'settings') UI.renderTab('settings');
+    });
+
     UI.renderTab('wardrobe');
     this.updateWardrobeSwitcherLabel();
 
@@ -938,6 +951,29 @@ const App = {
       } catch (err) { UI.toast('导入失败：文件格式不正确'); }
     };
     reader.readAsText(file);
+  },
+
+  // ===== PWA 安装 =====
+  isPWAInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  },
+
+  isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  },
+
+  async installApp() {
+    if (!this.state.deferredPrompt) {
+      UI.toast('请在浏览器菜单中选择「添加到主屏幕」');
+      return;
+    }
+    this.state.deferredPrompt.prompt();
+    const { outcome } = await this.state.deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      UI.toast('安装成功，可在桌面找到共享衣柜');
+    }
+    this.state.deferredPrompt = null;
+    UI.renderTab('settings');
   },
 
   clearAllData() {
