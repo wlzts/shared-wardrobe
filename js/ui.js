@@ -440,6 +440,64 @@ const UI = {
     input.type = input.type === 'password' ? 'text' : 'password';
   },
 
+  // ===== 安装横幅 =====
+  showInstallBanner() {
+    if (!this.installBanner) {
+      this.installBanner = document.createElement('div');
+      this.installBanner.id = 'installBanner';
+      this.installBanner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#B8860B,#D4A01E);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,0.2)';
+      document.body.appendChild(this.installBanner);
+      document.body.style.paddingTop = '58px';
+    }
+    let actionHtml = '';
+    if (App.isWeChat()) {
+      actionHtml = '<button onclick="UI.copyLink()" style="background:#fff;color:#B8860B;border:none;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap">复制链接</button>';
+    } else if (App.state.deferredPrompt) {
+      actionHtml = '<button onclick="App.installApp()" style="background:#fff;color:#B8860B;border:none;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap">立即安装</button>';
+    }
+    let tipText = '';
+    if (App.isWeChat()) {
+      tipText = '微信内无法安装，点右上角 → 在浏览器打开';
+    } else if (App.state.deferredPrompt) {
+      tipText = '安装后全屏使用，支持离线打开';
+    } else if (App.isIOS()) {
+      tipText = '点底部分享按钮 → 添加到主屏幕';
+    } else {
+      tipText = '点浏览器菜单 → 添加到主屏幕';
+    }
+    this.installBanner.innerHTML = `
+      <div style="font-size:20px;flex-shrink:0">📱</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:bold;line-height:1.3">安装共享衣柜到桌面</div>
+        <div style="font-size:11px;opacity:0.85;line-height:1.3;margin-top:2px">${tipText}</div>
+      </div>
+      ${actionHtml}
+      <button onclick="UI.hideInstallBanner()" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;padding:2px;opacity:0.8;flex-shrink:0">✕</button>`;
+  },
+
+  hideInstallBanner() {
+    if (this.installBanner) {
+      this.installBanner.remove();
+      this.installBanner = null;
+      document.body.style.paddingTop = '';
+    }
+  },
+
+  copyLink() {
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => this.toast('链接已复制，去浏览器粘贴打开'));
+    } else {
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      this.toast('链接已复制，去浏览器粘贴打开');
+    }
+  },
+
   // ===== 衣柜抽屉 =====
   openWardrobeDrawer() {
     this.renderWardrobeList();
