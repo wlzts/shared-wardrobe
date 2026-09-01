@@ -1,6 +1,21 @@
 {
   "wardrobeId": "99b27ab5-ff03-452c-8964-1267425ac031",
-  "clothes": [],
+  "clothes": [
+    {
+      "id": "ee78ad71-ab2e-4ba0-b2dd-6a4f9e2c8a57",
+      "name": "test",
+      "category": "上装",
+      "subcategory": "",
+      "colors": [],
+      "seasons": [],
+      "brand": "",
+      "purchaseDate": "",
+      "notes": "",
+      "image": "images/ee78ad71-ab2e-4ba0-b2dd-6a4f9e2c8a57.jpg",
+      "createdAt": "2026-09-01T03:20:45.188Z",
+      "updatedAt": "2026-09-01T03:20:45.188Z"
+    }
+  ],
   "outfits": [],
-  "lastUpdated": "2026-09-01T03:20:15.367Z"
+  "lastUpdated": "2026-09-01T03:20:47.226Z"
 }
