@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'services/app_state.dart';
 import 'screens/wardrobe_screen.dart';
 import 'screens/outfit_screen.dart';
@@ -20,32 +20,58 @@ class MyApp extends StatelessWidget {
       title: '共享衣柜',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFFB8860B),
+        primaryColor: const Color(0xFF5C2E0A),
         scaffoldBackgroundColor: const Color(0xFFFAF6F0),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFB8860B),
-          primary: const Color(0xFFB8860B),
+          seedColor: const Color(0xFF5C2E0A),
+          primary: const Color(0xFF5C2E0A),
           background: const Color(0xFFFAF6F0),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFFFAF6F0),
-          foregroundColor: Color(0xFF333333),
+          foregroundColor: Color(0xFF2D1810),
           elevation: 0,
           centerTitle: true,
+          titleTextStyle: TextStyle(color: Color(0xFF2D1810), fontSize: 18, fontWeight: FontWeight.bold),
         ),
         cardTheme: CardTheme(
           color: Colors.white,
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF5C2E0A),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF5C2E0A),
+            side: const BorderSide(color: Color(0xFF5C2E0A), width: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF5C2E0A),
+            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Color(0xFFB8860B),
+          backgroundColor: Color(0xFF5C2E0A),
           foregroundColor: Colors.white,
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
-          selectedItemColor: Color(0xFFB8860B),
+          selectedItemColor: Color(0xFF5C2E0A),
           unselectedItemColor: Color(0xFF999999),
+          selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
           type: BottomNavigationBarType.fixed,
           showUnselectedLabels: true,
         ),
@@ -56,7 +82,20 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
           ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF5C2E0A), width: 1.5),
+          ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          labelStyle: const TextStyle(color: Color(0xFF666666)),
+        ),
+        chipTheme: ChipThemeData(
+          selectedColor: const Color(0xFF5C2E0A),
+          backgroundColor: const Color(0xFFF0E8DC),
+          labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF333333)),
+          secondaryLabelStyle: const TextStyle(fontSize: 12, color: Colors.white),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
       ),
       home: const HomeScreen(),
@@ -112,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     if (!_initialized) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Color(0xFFB8860B))),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF5C2E0A))),
       );
     }
     return Scaffold(
