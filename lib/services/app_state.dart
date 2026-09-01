@@ -57,6 +57,7 @@ class AppState extends ChangeNotifier {
         username: prefs.getString('username') ?? 'wlzts',
         repo: prefs.getString('repo') ?? 'shared-wardrobe',
         token: token,
+        branch: 'flutter-app',
       );
     }
 
@@ -144,11 +145,11 @@ class AppState extends ChangeNotifier {
     await _saveCache();
   }
 
-  Future<void> switchWardrobe(String id) async {
+  void switchWardrobe(String id) {
     currentWardrobeId = id;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('current_wardrobe', id);
     notifyListeners();
+    // 异步保存，不阻塞UI
+    SharedPreferences.getInstance().then((prefs) => prefs.setString('current_wardrobe', id));
   }
 
   Future<bool> createWardrobe(String name, String description, String visibility) async {
@@ -251,6 +252,78 @@ class AppState extends ChangeNotifier {
           await _saveCache();
           notifyListeners();
         }
+      });
+    } finally {
+      isAdding = false;
+      notifyListeners();
+    }
+  }
+
+  // 批量添加衣物
+  Future<void> addClothesBatch(List<Map<String, dynamic>> clothesList) async {
+    if (isAdding || clothesList.isEmpty) return;
+    isAdding = true;
+    notifyListeners();
+
+    try {
+      final data = wardrobeData[currentWardrobeId];
+      if (data == null) return;
+
+      final List<Clothe> createdClothes = [];
+      for (final item in clothesList) {
+        final clothe = item['clothe'] as Clothe;
+        final imagePath = 'images/${clothe.id}.jpg';
+        final localClothe = Clothe(
+          id: clothe.id,
+          name: clothe.name,
+          category: clothe.category,
+          color: clothe.color,
+          season: clothe.season,
+          imagePath: imagePath,
+          imageUrl: '',
+          brand: clothe.brand,
+          notes: clothe.notes,
+          createdAt: clothe.createdAt,
+        );
+        data.clothes.add(localClothe);
+        createdClothes.add(localClothe);
+      }
+      data.lastUpdated = DateTime.now();
+      await _saveCache();
+      notifyListeners();
+
+      // 后台异步批量同步
+      _enqueueSync(() async {
+        for (int i = 0; i < clothesList.length; i++) {
+          final item = clothesList[i];
+          final clothe = item['clothe'] as Clothe;
+          final bytes = item['bytes'] as List<int>;
+          final imagePath = 'images/${clothe.id}.jpg';
+          try {
+            await gh.uploadImage(imagePath, bytes, message: 'upload image ${clothe.id}');
+            final idx = data.clothes.indexWhere((c) => c.id == clothe.id);
+            if (idx >= 0) {
+              data.clothes[idx] = Clothe(
+                id: clothe.id,
+                name: clothe.name,
+                category: clothe.category,
+                color: clothe.color,
+                season: clothe.season,
+                imagePath: imagePath,
+                imageUrl: gh.rawUrl(imagePath),
+                brand: clothe.brand,
+                notes: clothe.notes,
+                createdAt: clothe.createdAt,
+              );
+            }
+          } catch (e) {
+            debugPrint('Failed to upload image ${clothe.id}: $e');
+          }
+        }
+        data.lastUpdated = DateTime.now();
+        await _saveWardrobeData(currentWardrobeId!);
+        await _saveCache();
+        notifyListeners();
       });
     } finally {
       isAdding = false;
