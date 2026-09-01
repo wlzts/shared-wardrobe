@@ -93,7 +93,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                     const SizedBox(height: 12),
                     const Text('还没有可推荐的共享衣柜', style: TextStyle(color: Colors.black54)),
                     const SizedBox(height: 8),
-                    const Text('让对方创建一个共享衣柜，或把你的衣柜设为共享', style: TextStyle(fontSize: 12, color: Colors.black38, textAlign: TextAlign.center)),
+                    const Text('让对方创建一个共享衣柜，或把你的衣柜设为共享', style: TextStyle(fontSize: 12, color: Colors.black38), textAlign: TextAlign.center),
                   ],
                 ),
               ),
