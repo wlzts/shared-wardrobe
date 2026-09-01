@@ -20,6 +20,22 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isRefreshing = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _state.addListener(_onStateChange);
+  }
+
+  @override
+  void dispose() {
+    _state.removeListener(_onStateChange);
+    super.dispose();
+  }
+
+  void _onStateChange() {
+    if (mounted) setState(() {});
+  }
+
   static const categories = ['全部', '上衣', '下装', '外套', '鞋子', '配饰', '包包', '其他'];
 
   List<Clothe> get _filteredClothes {
