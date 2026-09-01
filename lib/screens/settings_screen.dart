@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/app_state.dart';
 
@@ -20,7 +20,7 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(children: [Icon(Icons.help_outline, color: Color(0xFFB8860B), size: 20), SizedBox(width: 8), Text('使用说明', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
+                  const Row(children: [Icon(Icons.help_outline, color: Color(0xFF5C2E0A), size: 20), SizedBox(width: 8), Text('使用说明', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
                   const SizedBox(height: 12),
                   _helpItem('1. 创建衣柜', '点击衣柜页面顶部名称，选择"新建衣柜"，建议设为"共享"以便互相推荐'),
                   _helpItem('2. 添加衣物', '点击右下角"添加衣物"按钮，上传图片并填写信息'),
@@ -39,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(children: [Icon(Icons.cloud, color: Color(0xFFB8860B), size: 20), SizedBox(width: 8), Text('GitHub 同步', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
+                  const Row(children: [Icon(Icons.cloud, color: Color(0xFF5C2E0A), size: 20), SizedBox(width: 8), Text('GitHub 同步', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
                   const SizedBox(height: 12),
                   _infoRow('用户名', state.username),
                   _infoRow('仓库', state.gh.repo),
@@ -52,7 +52,7 @@ class SettingsScreen extends StatelessWidget {
                           onPressed: state.isSyncing ? null : () => state.sync(),
                           icon: Icon(state.isSyncing ? Icons.sync : Icons.refresh, size: 18),
                           label: Text(state.isSyncing ? '同步中...' : '手动同步'),
-                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFB8860B), side: const BorderSide(color: Color(0xFFB8860B))),
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF5C2E0A), side: const BorderSide(color: Color(0xFF5C2E0A))),
                         ),
                       ),
                     ],
@@ -111,7 +111,7 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF8B6508))),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF3D1E08))),
                 const SizedBox(height: 2),
                 Text(desc, style: const TextStyle(fontSize: 12, color: Colors.black54, height: 1.4)),
               ],
