@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/app_state.dart';
@@ -43,9 +43,9 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
         title: const Text('穿搭推荐', style: TextStyle(fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: const Color(0xFFB8860B),
+          labelColor: const Color(0xFF5C2E0A),
           unselectedLabelColor: Colors.black45,
-          indicatorColor: const Color(0xFFB8860B),
+          indicatorColor: const Color(0xFF5C2E0A),
           tabs: [
             Tab(text: '收到 (${_state.receivedRecommendations.length})'),
             Tab(text: '发出 (${_state.sentRecommendations.length})'),
@@ -74,10 +74,10 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: const Color(0xFFB8860B).withOpacity(0.1),
+            color: const Color(0xFF5C2E0A).withOpacity(0.1),
             child: const Row(
               children: [
-                Icon(Icons.info_outline, color: Color(0xFFB8860B)),
+                Icon(Icons.info_outline, color: Color(0xFF5C2E0A)),
                 SizedBox(width: 8),
                 Expanded(child: Text('选择要推荐给哪个衣柜（共享衣柜）', style: TextStyle(fontSize: 13))),
               ],
@@ -108,7 +108,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                   final count = _state.wardrobeData[w.id]?.clothes.length ?? 0;
                   return Card(
                     child: ListTile(
-                      leading: const CircleAvatar(backgroundColor: Color(0xFFB8860B), child: Icon(Icons.checkroom, color: Colors.white)),
+                      leading: const CircleAvatar(backgroundColor: Color(0xFF5C2E0A), child: Icon(Icons.checkroom, color: Colors.white)),
                       title: Text(w.name, style: const TextStyle(fontWeight: FontWeight.w500)),
                       subtitle: Text('${w.owner} · $count 件衣物${w.description.isNotEmpty ? "\n${w.description}" : ""}'),
                       isThreeLine: w.description.isNotEmpty,
@@ -130,7 +130,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          color: const Color(0xFFB8860B).withOpacity(0.1),
+          color: const Color(0xFF5C2E0A).withOpacity(0.1),
           child: Row(
             children: [
               IconButton(
@@ -150,7 +150,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
               ),
               ElevatedButton(
                 onPressed: _selectedClotheIds.isEmpty ? null : _showRecommendMessageDialog,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
                 child: const Text('发送'),
               ),
             ],
@@ -191,7 +191,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                         ),
                       ),
                       if (selected)
-                        Positioned(top: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Color(0xFFB8860B), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 14))),
+                        Positioned(top: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Color(0xFF5C2E0A), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 14))),
                     ],
                   ),
                 );
@@ -225,7 +225,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('推荐已发送，对方会收到通知')));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
             child: const Text('发送推荐'),
           ),
         ],
@@ -270,7 +270,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
               children: [
                 Row(
                   children: [
-                    CircleAvatar(radius: 16, backgroundColor: const Color(0xFFB8860B).withOpacity(0.15), child: Text(rec.fromUser.substring(0, 1).toUpperCase(), style: const TextStyle(color: Color(0xFFB8860B), fontSize: 12, fontWeight: FontWeight.bold))),
+                    CircleAvatar(radius: 16, backgroundColor: const Color(0xFF5C2E0A).withOpacity(0.15), child: Text(rec.fromUser.substring(0, 1).toUpperCase(), style: const TextStyle(color: Color(0xFF5C2E0A), fontSize: 12, fontWeight: FontWeight.bold))),
                     const SizedBox(width: 8),
                     Expanded(child: Text('${rec.fromUser} 推荐给 ${targetW?.name ?? ""}', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14))),
                     _buildStatusBadge(rec.status),
@@ -310,7 +310,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                     children: [
                       Expanded(child: OutlinedButton(onPressed: () => _state.respondRecommendation(rec.id, 'ignored'), style: OutlinedButton.styleFrom(foregroundColor: Colors.black45), child: const Text('忽略'))),
                       const SizedBox(width: 10),
-                      Expanded(child: ElevatedButton(onPressed: () => _acceptRecommendation(rec), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)), child: const Text('采纳为穿搭'))),
+                      Expanded(child: ElevatedButton(onPressed: () => _acceptRecommendation(rec), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)), child: const Text('采纳为穿搭'))),
                     ],
                   ),
                 ],
@@ -354,7 +354,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已采纳并添加到穿搭')));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
             child: const Text('确认'),
           ),
         ],
