@@ -1,0 +1,438 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/app_state.dart';
+import '../models/models.dart';
+
+class WardrobeScreen extends StatefulWidget {
+  const WardrobeScreen({super.key});
+
+  @override
+  State<WardrobeScreen> createState() => _WardrobeScreenState();
+}
+
+class _WardrobeScreenState extends State<WardrobeScreen> {
+  final AppState _state = AppState();
+  String _search = '';
+  String _category = '全部';
+  final ImagePicker _picker = ImagePicker();
+
+  static const categories = ['全部', '上衣', '下装', '外套', '鞋子', '配饰', '包包', '其他'];
+
+  List<Clothe> get _filteredClothes {
+    var list = _state.currentClothes;
+    if (_category != '全部') list = list.where((c) => c.category == _category).toList();
+    if (_search.isNotEmpty) {
+      list = list.where((c) => c.name.toLowerCase().contains(_search.toLowerCase())).toList();
+    }
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: GestureDetector(
+          onTap: _showWardrobeDrawer,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_state.currentWardrobe?.name ?? '选择衣柜',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Icon(Icons.arrow_drop_down, size: 20),
+            ],
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(_state.isSyncing ? Icons.sync : Icons.cloud_done,
+                color: _state.isSyncing ? Colors.orange : Colors.green),
+            onPressed: () => _state.sync(),
+            tooltip: _state.syncStatus,
+          ),
+        ],
+      ),
+      body: _state.currentWardrobe == null
+          ? _buildEmptyWardrobe()
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: '搜索衣物...',
+                      prefixIcon: Icon(Icons.search),
+                      isDense: true,
+                    ),
+                    onChanged: (v) => setState(() => _search = v),
+                  ),
+                ),
+                SizedBox(
+                  height: 40,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    itemCount: categories.length,
+                    itemBuilder: (_, i) {
+                      final cat = categories[i];
+                      final active = _category == cat;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: ChoiceChip(
+                          label: Text(cat),
+                          selected: active,
+                          onSelected: (_) => setState(() => _category = cat),
+                          selectedColor: const Color(0xFFB8860B),
+                          labelStyle: TextStyle(color: active ? Colors.white : Colors.black54),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: _filteredClothes.isEmpty
+                      ? _buildEmptyClothes()
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(10),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                          ),
+                          itemCount: _filteredClothes.length,
+                          itemBuilder: (_, i) => _buildClotheCard(_filteredClothes[i]),
+                        ),
+                ),
+              ],
+            ),
+      floatingActionButton: _state.currentWardrobe != null &&
+              _state.currentWardrobe!.owner == _state.username
+          ? FloatingActionButton(
+              onPressed: _showAddClotheDialog,
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildEmptyWardrobe() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.checkroom, size: 80, color: Color(0xFFCCC0A8)),
+          const SizedBox(height: 16),
+          const Text('还没有衣柜', style: TextStyle(fontSize: 18, color: Colors.black54)),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: _showCreateWardrobeDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('创建第一个衣柜'),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyClothes() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.inventory_2, size: 70, color: Color(0xFFCCC0A8)),
+          const SizedBox(height: 12),
+          Text(
+            _search.isNotEmpty || _category != '全部' ? '没有找到匹配的衣物' : '衣柜还是空的',
+            style: const TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+          if (_state.currentWardrobe!.owner == _state.username) ...[
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: _showAddClotheDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('添加第一件衣物'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClotheCard(Clothe c) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _showClotheDetail(c),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: c.imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: c.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(color: const Color(0xFFF0E8D8), child: const Center(child: Icon(Icons.image, color: Colors.white30))),
+                      errorWidget: (_, __, ___) => Container(color: const Color(0xFFF0E8D8), child: const Center(child: Icon(Icons.broken_image, color: Colors.white30))),
+                    )
+                  : Container(color: const Color(0xFFF0E8D8), child: const Center(child: Icon(Icons.checkroom, size: 40, color: Colors.white30))),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text('${c.category}${c.color.isNotEmpty ? " · ${c.color}" : ""}',
+                      style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWardrobeDrawer() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('我的衣柜', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              ..._state.visibleWardrobes.map((w) => ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFB8860B).withOpacity(0.15),
+                      child: const Icon(Icons.checkroom, color: Color(0xFFB8860B)),
+                    ),
+                    title: Text(w.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text('${w.owner} · ${_state.wardrobeData[w.id]?.clothes.length ?? 0} 件衣物'),
+                    trailing: w.visibility == 'shared' ? const Chip(label: Text('共享', style: TextStyle(fontSize: 10)), padding: EdgeInsets.zero) : null,
+                    selected: w.id == _state.currentWardrobeId,
+                    onTap: () {
+                      _state.switchWardrobe(w.id);
+                      Navigator.pop(ctx);
+                    },
+                  )),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.add_circle, color: Color(0xFFB8860B)),
+                title: const Text('新建衣柜', style: TextStyle(color: Color(0xFFB8860B))),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showCreateWardrobeDialog();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateWardrobeDialog() {
+    final nameCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    String visibility = 'private';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('新建衣柜'),
+        content: StatefulBuilder(
+          builder: (ctx, setDialogState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: '衣柜名称'), autofocus: true),
+              const SizedBox(height: 12),
+              TextField(controller: descCtrl, decoration: const InputDecoration(labelText: '描述（可选）')),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: visibility,
+                decoration: const InputDecoration(labelText: '可见性'),
+                items: const [
+                  DropdownMenuItem(value: 'private', child: Text('私有（仅自己可见）')),
+                  DropdownMenuItem(value: 'shared', child: Text('共享（同仓库用户可查看）')),
+                ],
+                onChanged: (v) => setDialogState(() => visibility = v!),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
+              await _state.createWardrobe(nameCtrl.text.trim(), descCtrl.text.trim(), visibility);
+              if (mounted) Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+            child: const Text('创建'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  File? _pickedImage;
+  void _showAddClotheDialog() {
+    final nameCtrl = TextEditingController();
+    final brandCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+    String category = '上衣';
+    String color = '';
+    String season = '';
+    _pickedImage = null;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('添加衣物'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    final XFile? img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                    if (img != null) setDialogState(() => _pickedImage = File(img.path));
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F0E8),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFDDD0B8)),
+                    ),
+                    child: _pickedImage != null
+                        ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(_pickedImage!, fit: BoxFit.cover))
+                        : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            Icon(Icons.add_a_photo, size: 36, color: Color(0xFFB8860B)),
+                            SizedBox(height: 6),
+                            Text('点击添加图片', style: TextStyle(color: Colors.black45, fontSize: 13)),
+                          ]),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: '衣物名称 *'), autofocus: true),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: category,
+                  decoration: const InputDecoration(labelText: '分类'),
+                  items: categories.where((c) => c != '全部').map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (v) => setDialogState(() => category = v!),
+                ),
+                const SizedBox(height: 10),
+                TextField(controller: TextEditingController(text: color), decoration: const InputDecoration(labelText: '颜色'), onChanged: (v) => color = v),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: season.isEmpty ? '四季' : season,
+                  decoration: const InputDecoration(labelText: '季节'),
+                  items: ['四季', '春', '夏', '秋', '冬'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                  onChanged: (v) => setDialogState(() => season = v!),
+                ),
+                const SizedBox(height: 10),
+                TextField(controller: brandCtrl, decoration: const InputDecoration(labelText: '品牌（可选）')),
+                const SizedBox(height: 10),
+                TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: '备注（可选）'), maxLines: 2),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameCtrl.text.trim().isEmpty || _pickedImage == null) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('请填写名称并添加图片')));
+                  return;
+                }
+                final bytes = await _pickedImage!.readAsBytes();
+                final clothe = Clothe(
+                  id: 'clothe-${DateTime.now().millisecondsSinceEpoch}',
+                  name: nameCtrl.text.trim(),
+                  category: category,
+                  color: color,
+                  season: season == '四季' ? '' : season,
+                  brand: brandCtrl.text.trim(),
+                  notes: notesCtrl.text.trim(),
+                  createdAt: DateTime.now(),
+                );
+                await _state.addClothe(clothe, bytes);
+                if (mounted) Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+              child: const Text('添加'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showClotheDetail(Clothe c) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (c.imageUrl.isNotEmpty)
+              CachedNetworkImage(imageUrl: c.imageUrl, height: 220, width: double.infinity, fit: BoxFit.cover)
+            else
+              Container(height: 160, color: const Color(0xFFF0E8D8), child: const Center(child: Icon(Icons.checkroom, size: 50, color: Colors.white30))),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(c.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 8, runSpacing: 4, children: [
+                    if (c.category.isNotEmpty) _tag(c.category),
+                    if (c.color.isNotEmpty) _tag(c.color),
+                    if (c.season.isNotEmpty) _tag(c.season),
+                    if (c.brand.isNotEmpty) _tag(c.brand),
+                  ]),
+                  if (c.notes.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(c.notes, style: const TextStyle(color: Colors.black54, fontSize: 14)),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (_state.currentWardrobe?.owner == _state.username)
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _state.deleteClothe(c.id);
+              },
+              child: const Text('删除', style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('关闭')),
+        ],
+      ),
+    );
+  }
+
+  Widget _tag(String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: const Color(0xFFB8860B).withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+        child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF8B6508))),
+      );
+}
