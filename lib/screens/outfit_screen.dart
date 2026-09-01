@@ -259,27 +259,35 @@ class _OutfitScreenState extends State<OutfitScreen> {
 
   void _showOutfitNoteDialog() {
     final noteCtrl = TextEditingController();
+    bool submitting = false;
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('穿搭备注'),
         content: TextField(controller: noteCtrl, decoration: const InputDecoration(labelText: '今天的穿搭心得（可选）'), maxLines: 2),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(onPressed: submitting ? null : () => Navigator.pop(ctx), child: const Text('取消')),
           ElevatedButton(
-            onPressed: () async {
-              final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-              await _state.addOutfit(dateStr, _selectedClotheIds.toList(), noteCtrl.text.trim());
-              if (mounted) {
-                Navigator.pop(ctx);
-                setState(() {
-                  _selectMode = false;
-                  _selectedClotheIds.clear();
-                });
-              }
-            },
+            onPressed: submitting
+                ? null
+                : () async {
+                    setState(() => submitting = true);
+                    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+                    await _state.addOutfit(dateStr, _selectedClotheIds.toList(), noteCtrl.text.trim());
+                    if (mounted) {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _selectMode = false;
+                        _selectedClotheIds.clear();
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('穿搭已记录')));
+                    }
+                  },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
-            child: const Text('保存'),
+            child: submitting
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('保存'),
           ),
         ],
       ),
