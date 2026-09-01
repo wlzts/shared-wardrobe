@@ -28,10 +28,13 @@ class GitHubService {
 
   String get _apiBase => 'https://api.github.com/repos/$username/$repo';
 
+  static const _timeout = Duration(seconds: 15);
+  static const _uploadTimeout = Duration(seconds: 60);
+
   Future<Map<String, dynamic>?> getFile(String path) async {
     try {
       final url = '$_apiBase/contents/$path?ref=$branch';
-      final res = await http.get(Uri.parse(url), headers: _headers);
+      final res = await http.get(Uri.parse(url), headers: _headers).timeout(_timeout);
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
         if (data is Map && data['content'] != null) {
@@ -54,7 +57,7 @@ class GitHubService {
         'branch': branch,
       };
       if (sha != null) body['sha'] = sha;
-      final res = await http.put(Uri.parse(url), headers: _headers, body: json.encode(body));
+      final res = await http.put(Uri.parse(url), headers: _headers, body: json.encode(body)).timeout(_timeout);
       return res.statusCode == 200 || res.statusCode == 201;
     } catch (e) {
       return false;
@@ -65,7 +68,7 @@ class GitHubService {
     try {
       final url = '$_apiBase/contents/$path';
       final body = {'message': message, 'sha': sha, 'branch': branch};
-      final res = await http.delete(Uri.parse(url), headers: _headers, body: json.encode(body));
+      final res = await http.delete(Uri.parse(url), headers: _headers, body: json.encode(body)).timeout(_timeout);
       return res.statusCode == 200;
     } catch (e) {
       return false;
@@ -81,7 +84,7 @@ class GitHubService {
         'branch': branch,
       };
       if (sha != null) body['sha'] = sha;
-      final res = await http.put(Uri.parse(url), headers: _headers, body: json.encode(body));
+      final res = await http.put(Uri.parse(url), headers: _headers, body: json.encode(body)).timeout(_uploadTimeout);
       return res.statusCode == 200 || res.statusCode == 201;
     } catch (e) {
       return false;
