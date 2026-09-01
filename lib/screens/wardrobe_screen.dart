@@ -306,15 +306,15 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     );
   }
 
-  File? _pickedImage;
+  List<File> _pickedImages = [];
   void _showAddClotheDialog() {
-    final nameCtrl = TextEditingController();
+    final nameCtrls = <TextEditingController>[];
     final brandCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     String category = '上衣';
     String color = '';
     String season = '';
-    _pickedImage = null;
+    _pickedImages = [];
     bool submitting = false;
 
     showDialog(
@@ -322,90 +322,148 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('添加衣物'),
+          title: Row(
+            children: [
+              const Expanded(child: Text('添加衣物')),
+              Text('${_pickedImages.length} 张', style: const TextStyle(fontSize: 12, color: Colors.black45)),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // 图片选择区域
                 GestureDetector(
                   onTap: () async {
-                    final XFile? img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-                    if (img != null) setDialogState(() => _pickedImage = File(img.path));
+                    final List<XFile> imgs = await _picker.pickMultiImage(imageQuality: 70) ?? [];
+                    if (imgs.isNotEmpty) {
+                      setDialogState(() {
+                        _pickedImages = imgs.map((f) => File(f.path)).toList();
+                        nameCtrls.clear();
+                        for (int i = 0; i < _pickedImages.length; i++) {
+                          nameCtrls.add(TextEditingController(text: '衣物${i + 1}'));
+                        }
+                      });
+                    }
                   },
                   child: Container(
                     width: double.infinity,
-                    height: 140,
+                    height: _pickedImages.isEmpty ? 120 : 100,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F0E8),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFDDD0B8)),
                     ),
-                    child: _pickedImage != null
-                        ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(_pickedImage!, fit: BoxFit.cover))
-                        : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(Icons.add_a_photo, size: 36, color: Color(0xFF5C2E0A)),
+                    child: _pickedImages.isEmpty
+                        ? const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            Icon(Icons.photo_library, size: 32, color: Color(0xFF5C2E0A)),
                             SizedBox(height: 6),
-                            Text('点击添加图片', style: TextStyle(color: Colors.black45, fontSize: 13)),
-                          ]),
+                            Text('点击选择多张图片', style: TextStyle(color: Colors.black45, fontSize: 13)),
+                          ])
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.all(8),
+                            itemCount: _pickedImages.length,
+                            itemBuilder: (_, i) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.file(_pickedImages[i], width: 70, height: 84, fit: BoxFit.cover),
+                                  ),
+                                  Positioned(
+                                    top: -6,
+                                    right: -6,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.remove_circle, color: Colors.red, size: 18),
+                                      onPressed: () => setDialogState(() {
+                                        _pickedImages.removeAt(i);
+                                        nameCtrls.removeAt(i);
+                                      }),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: '衣物名称 *'), autofocus: true),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  value: category,
-                  decoration: const InputDecoration(labelText: '分类'),
-                  items: categories.where((c) => c != '全部').map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (v) => setDialogState(() => category = v!),
-                ),
-                const SizedBox(height: 10),
-                TextField(controller: TextEditingController(text: color), decoration: const InputDecoration(labelText: '颜色'), onChanged: (v) => color = v),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  value: season.isEmpty ? '四季' : season,
-                  decoration: const InputDecoration(labelText: '季节'),
-                  items: ['四季', '春', '夏', '秋', '冬'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                  onChanged: (v) => setDialogState(() => season = v!),
-                ),
-                const SizedBox(height: 10),
-                TextField(controller: brandCtrl, decoration: const InputDecoration(labelText: '品牌（可选）')),
-                const SizedBox(height: 10),
-                TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: '备注（可选）'), maxLines: 2),
+                if (_pickedImages.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Align(alignment: Alignment.centerLeft, child: Text('统一设置（应用到所有衣物）', style: TextStyle(fontSize: 12, color: Colors.black45))),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: category,
+                    decoration: const InputDecoration(labelText: '分类', isDense: true),
+                    items: categories.where((c) => c != '全部').map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    onChanged: (v) => setDialogState(() => category = v!),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(controller: TextEditingController(text: color), decoration: const InputDecoration(labelText: '颜色', isDense: true), onChanged: (v) => color = v),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: season.isEmpty ? '四季' : season,
+                    decoration: const InputDecoration(labelText: '季节', isDense: true),
+                    items: ['四季', '春', '夏', '秋', '冬'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                    onChanged: (v) => setDialogState(() => season = v!),
+                  ),
+                  const SizedBox(height: 12),
+                  // 每个衣物的名称编辑
+                  const Align(alignment: Alignment.centerLeft, child: Text('衣物名称（可逐个修改）', style: TextStyle(fontSize: 12, color: Colors.black45))),
+                  const SizedBox(height: 6),
+                  ...List.generate(_pickedImages.length, (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.file(_pickedImages[i], width: 32, height: 32, fit: BoxFit.cover)),
+                        const SizedBox(width: 8),
+                        Expanded(child: TextField(controller: nameCtrls[i], decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10)))),
+                      ],
+                    ),
+                  )),
+                ],
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: submitting ? null : () => Navigator.pop(ctx), child: const Text('取消')),
             ElevatedButton(
-              onPressed: submitting
+              onPressed: submitting || _pickedImages.isEmpty
                   ? null
                   : () async {
-                      if (nameCtrl.text.trim().isEmpty || _pickedImage == null) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('请填写名称并添加图片')));
-                        return;
+                      for (final ctrl in nameCtrls) {
+                        if (ctrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('请填写所有衣物名称')));
+                          return;
+                        }
                       }
                       setDialogState(() => submitting = true);
-                      final bytes = await _pickedImage!.readAsBytes();
-                      final clothe = Clothe(
-                        id: 'clothe-${DateTime.now().millisecondsSinceEpoch}-${_state.currentClothes.length}',
-                        name: nameCtrl.text.trim(),
-                        category: category,
-                        color: color,
-                        season: season == '四季' ? '' : season,
-                        brand: brandCtrl.text.trim(),
-                        notes: notesCtrl.text.trim(),
-                        createdAt: DateTime.now(),
-                      );
-                      await _state.addClothe(clothe, bytes);
+                      final clothesList = <Map<String, dynamic>>[];
+                      for (int i = 0; i < _pickedImages.length; i++) {
+                        final bytes = await _pickedImages[i].readAsBytes();
+                        final clothe = Clothe(
+                          id: 'clothe-${DateTime.now().millisecondsSinceEpoch}-$i-${_state.currentClothes.length}',
+                          name: nameCtrls[i].text.trim(),
+                          category: category,
+                          color: color,
+                          season: season == '四季' ? '' : season,
+                          brand: brandCtrl.text.trim(),
+                          notes: notesCtrl.text.trim(),
+                          createdAt: DateTime.now(),
+                        );
+                        clothesList.add({'clothe': clothe, 'bytes': bytes});
+                      }
+                      await _state.addClothesBatch(clothesList);
                       if (ctx.mounted) {
                         Navigator.pop(ctx);
-                        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('衣物已添加，后台同步中...')));
+                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('已添加 ${clothesList.length} 件衣物，后台同步中...')));
                       }
                     },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
               child: submitting
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('添加'),
+                  : Text(_pickedImages.length > 1 ? '批量添加 ${_pickedImages.length} 件' : '添加'),
             ),
           ],
         ),
