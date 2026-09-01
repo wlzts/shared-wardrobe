@@ -47,6 +47,7 @@ class AppState extends ChangeNotifier {
         username: 'wlzts',
         repo: 'shared-wardrobe',
         token: _decodeToken(),
+        branch: 'flutter-app',
       );
       await prefs.setString('token', gh.token);
       await prefs.setString('username', gh.username);
