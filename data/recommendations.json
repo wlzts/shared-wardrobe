@@ -1,0 +1,27 @@
+{
+  "lastUpdated": "2026-09-01T00:00:00Z",
+  "recommendations": [
+    {
+      "id": "rec1",
+      "fromUser": "demo-partner",
+      "toWardrobeId": "demo-wardrobe-1",
+      "clotheIds": ["c3", "c1", "c2", "c4"],
+      "message": "这件卡其色风衣配白T和牛仔裤很适合周末出门，再搭那双小白鞋就完美了！",
+      "status": "pending",
+      "acceptedOutfitDate": null,
+      "createdAt": "2026-08-31T10:00:00Z",
+      "respondedAt": null
+    },
+    {
+      "id": "rec2",
+      "fromUser": "wlzts",
+      "toWardrobeId": "demo-wardrobe-2",
+      "clotheIds": ["p1", "p5"],
+      "message": "这条碎花裙配裸色高跟鞋很适合约会，周末穿这个吧",
+      "status": "accepted",
+      "acceptedOutfitDate": "2026-08-27",
+      "createdAt": "2026-08-26T20:00:00Z",
+      "respondedAt": "2026-08-27T08:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "wardrobeId": "demo-wardrobe-1",
+  "lastUpdated": "2026-09-01T00:00:00Z",
+  "clothes": [
+    {
+      "id": "c1",
+      "name": "白色棉质T恤",
+      "category": "上装",
+      "subcategory": "T恤",
+      "colors": ["白色"],
+      "seasons": ["春", "夏"],
+      "brand": "优衣库",
+      "purchaseDate": "2025-06-15",
+      "image": "",
+      "notes": "基础款，百搭",
+      "createdAt": "2026-09-01T00:00:00Z",
+      "updatedAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "c2",
+      "name": "深蓝色牛仔裤",
+      "category": "下装",
+      "subcategory": "牛仔裤",
+      "colors": ["深蓝"],
+      "seasons": ["春", "秋", "冬"],
+      "brand": "Levi's",
+      "purchaseDate": "2025-03-20",
+      "image": "",
+      "notes": "修身款",
+      "createdAt": "2026-09-01T00:00:00Z",
+      "updatedAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "c3",
+      "name": "卡其色风衣",
+      "category": "外套",
+      "subcategory": "风衣",
+      "colors": ["卡其"],
+      "seasons": ["春", "秋"],
+      "brand": "Burberry",
+      "purchaseDate": "2025-09-10",
+      "image": "",
+      "notes": "春秋必备",
+      "createdAt": "2026-09-01T00:00:00Z",
+      "updatedAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "c4",
+      "name": "白色运动鞋",
+      "category": "鞋履",
+      "subcategory": "运动鞋",
+      "colors": ["白色"],
+      "seasons": ["春", "夏", "秋"],
+      "brand": "Nike",
+      "purchaseDate": "2025-05-01",
+      "image": "",
+      "notes": "Air Force 1",
+      "createdAt": "2026-09-01T00:00:00Z",
+      "updatedAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "c5",
+      "name": "黑色针织毛衣",
+      "category": "上装",
+      "subcategory": "毛衣",
+      "colors": ["黑色"],
+      "seasons": ["秋", "冬"],
+      "brand": "COS",
+      "purchaseDate": "2025-11-01",
+      "image": "",
+      "notes": "圆领，宽松款",
+      "createdAt": "2026-09-01T00:00:00Z",
+      "updatedAt": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "outfits": [
+    {
+      "id": "o1",
+      "date": "2026-08-30",
+      "clotheIds": ["c1", "c2", "c4"],
+      "notes": "周末休闲",
+      "createdAt": "2026-08-30T08:00:00Z"
+    },
+    {
+      "id": "o2",
+      "date": "2026-08-28",
+      "clotheIds": ["c5", "c2", "c4"],
+      "notes": "降温了穿毛衣",
+      "createdAt": "2026-08-28T08:00:00Z"
+    }
+  ]
+}
