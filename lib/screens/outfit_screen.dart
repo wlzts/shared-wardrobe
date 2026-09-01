@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/app_state.dart';
@@ -103,7 +103,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                   child: Container(
                     margin: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFB8860B) : (isToday ? const Color(0xFFB8860B).withOpacity(0.15) : Colors.transparent),
+                      color: isSelected ? const Color(0xFF5C2E0A) : (isToday ? const Color(0xFF5C2E0A).withOpacity(0.15) : Colors.transparent),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -111,7 +111,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('$day', style: TextStyle(fontSize: 13, color: isSelected ? Colors.white : Colors.black87, fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal)),
-                          if (hasOutfit) Container(width: 4, height: 4, decoration: BoxDecoration(color: isSelected ? Colors.white : const Color(0xFFB8860B), borderRadius: BorderRadius.circular(2))),
+                          if (hasOutfit) Container(width: 4, height: 4, decoration: BoxDecoration(color: isSelected ? Colors.white : const Color(0xFF5C2E0A), borderRadius: BorderRadius.circular(2))),
                         ],
                       ),
                     ),
@@ -201,13 +201,13 @@ class _OutfitScreenState extends State<OutfitScreen> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          color: const Color(0xFFB8860B).withOpacity(0.1),
+          color: const Color(0xFF5C2E0A).withOpacity(0.1),
           child: Row(
             children: [
               Expanded(child: Text('为 ${DateFormat('M月d日').format(_selectedDate)} 选择衣物（${_selectedClotheIds.length}件）', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
               ElevatedButton(
                 onPressed: _selectedClotheIds.isEmpty ? null : () => _showOutfitNoteDialog(),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
                 child: const Text('确认'),
               ),
             ],
@@ -246,7 +246,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                       ),
                     ),
                     if (selected)
-                      Positioned(top: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Color(0xFFB8860B), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 14))),
+                      Positioned(top: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Color(0xFF5C2E0A), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 14))),
                   ],
                 ),
               );
@@ -284,7 +284,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('穿搭已记录')));
                     }
                   },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
             child: submitting
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Text('保存'),
