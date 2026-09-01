@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -62,7 +62,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
               child: Column(
                 children: [
                   if (_isRefreshing)
-                    const LinearProgressIndicator(minHeight: 2, color: Color(0xFFB8860B)),
+                    const LinearProgressIndicator(minHeight: 2, color: Color(0xFF5C2E0A)),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
                     child: TextField(
@@ -89,7 +89,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             label: Text(cat),
                             selected: active,
                             onSelected: (_) => setState(() => _category = cat),
-                            selectedColor: const Color(0xFFB8860B),
+                            selectedColor: const Color(0xFF5C2E0A),
                             labelStyle: TextStyle(color: active ? Colors.white : Colors.black54),
                           ),
                         );
@@ -148,7 +148,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             onPressed: _showCreateWardrobeDialog,
             icon: const Icon(Icons.add),
             label: const Text('创建第一个衣柜'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
           ),
         ],
       ),
@@ -194,7 +194,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   ? CachedNetworkImage(
                       imageUrl: c.imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: const Color(0xFFF0E8D8), child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFB8860B))))),
+                      placeholder: (_, __) => Container(color: const Color(0xFFF0E8D8), child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF5C2E0A))))),
                       errorWidget: (_, __, ___) => Container(color: const Color(0xFFF0E8D8), child: const Center(child: Icon(Icons.broken_image, color: Colors.white30))),
                     )
                   : Container(color: const Color(0xFFF0E8D8), child: const Center(child: Icon(Icons.checkroom, size: 40, color: Colors.white30))),
@@ -233,8 +233,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
               const SizedBox(height: 12),
               ..._state.visibleWardrobes.map((w) => ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: const Color(0xFFB8860B).withOpacity(0.15),
-                      child: const Icon(Icons.checkroom, color: Color(0xFFB8860B)),
+                      backgroundColor: const Color(0xFF5C2E0A).withOpacity(0.15),
+                      child: const Icon(Icons.checkroom, color: Color(0xFF5C2E0A)),
                     ),
                     title: Text(w.name, style: const TextStyle(fontWeight: FontWeight.w500)),
                     subtitle: Text('${w.owner} · ${_state.wardrobeData[w.id]?.clothes.length ?? 0} 件衣物'),
@@ -247,8 +247,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   )),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.add_circle, color: Color(0xFFB8860B)),
-                title: const Text('新建衣柜', style: TextStyle(color: Color(0xFFB8860B))),
+                leading: const Icon(Icons.add_circle, color: Color(0xFF5C2E0A)),
+                title: const Text('新建衣柜', style: TextStyle(color: Color(0xFF5C2E0A))),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showCreateWardrobeDialog();
@@ -298,7 +298,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
               await _state.createWardrobe(nameCtrl.text.trim(), descCtrl.text.trim(), visibility);
               if (mounted) Navigator.pop(ctx);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
             child: const Text('创建'),
           ),
         ],
@@ -343,7 +343,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     child: _pickedImage != null
                         ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(_pickedImage!, fit: BoxFit.cover))
                         : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(Icons.add_a_photo, size: 36, color: Color(0xFFB8860B)),
+                            Icon(Icons.add_a_photo, size: 36, color: Color(0xFF5C2E0A)),
                             SizedBox(height: 6),
                             Text('点击添加图片', style: TextStyle(color: Colors.black45, fontSize: 13)),
                           ]),
@@ -402,7 +402,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('衣物已添加，后台同步中...')));
                       }
                     },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5C2E0A)),
               child: submitting
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('添加'),
@@ -455,8 +455,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 Navigator.pop(ctx);
                 _navigateToRecommendWithClothe(c);
               },
-              icon: const Icon(Icons.favorite, color: Color(0xFFB8860B)),
-              label: const Text('推荐给TA', style: TextStyle(color: Color(0xFFB8860B))),
+              icon: const Icon(Icons.favorite, color: Color(0xFF5C2E0A)),
+              label: const Text('推荐给TA', style: TextStyle(color: Color(0xFF5C2E0A))),
             ),
           if (_state.currentWardrobe?.owner == _state.username)
             TextButton(
@@ -483,7 +483,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
   Widget _tag(String text) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(color: const Color(0xFFB8860B).withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-        child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF8B6508))),
+        decoration: BoxDecoration(color: const Color(0xFF5C2E0A).withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+        child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF3D1E08))),
       );
 }
