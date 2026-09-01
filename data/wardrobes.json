@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-09-01T03:20:13.656Z",
+  "lastUpdated": "2026-09-01T03:21:38.514Z",
   "wardrobes": [
     {
       "id": "5d23a578-193f-48f0-9cfa-b49efa1deb88",
@@ -21,6 +21,16 @@
       "visibility": "private",
       "createdAt": "2026-09-01T03:20:13.652Z",
       "updatedAt": "2026-09-01T03:20:13.652Z"
+    },
+    {
+      "id": "a7c3059c-b398-4f6b-ab27-6679b2828b67",
+      "name": "推荐",
+      "owner": "wlzts",
+      "description": "",
+      "coverImage": "",
+      "visibility": "private",
+      "createdAt": "2026-09-01T03:21:37.076Z",
+      "updatedAt": "2026-09-01T03:21:37.076Z"
     }
   ]
 }
