@@ -5,7 +5,8 @@ import '../services/app_state.dart';
 import '../models/models.dart';
 
 class RecommendScreen extends StatefulWidget {
-  const RecommendScreen({super.key});
+  final String? preselectedClotheId; // 从衣物详情页推荐时预选中
+  const RecommendScreen({super.key, this.preselectedClotheId});
 
   @override
   State<RecommendScreen> createState() => _RecommendScreenState();
@@ -22,6 +23,11 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // 如果有预选中的衣物，自动进入发送模式
+    if (widget.preselectedClotheId != null) {
+      _selectedClotheIds.add(widget.preselectedClotheId!);
+      _sendMode = true;
+    }
   }
 
   @override
@@ -29,9 +35,6 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
     _tabController.dispose();
     super.dispose();
   }
-
-  List<Wardrobe> get _sharedWardrobes =>
-      _state.wardrobes.where((w) => w.visibility == 'shared' && w.owner != _state.username).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -44,15 +47,15 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
           unselectedLabelColor: Colors.black45,
           indicatorColor: const Color(0xFFB8860B),
           tabs: [
-            Tab(text: '收到的推荐 (${_state.receivedRecommendations.length})'),
-            Tab(text: '发出的推荐 (${_state.sentRecommendations.length})'),
+            Tab(text: '收到 (${_state.receivedRecommendations.length})'),
+            Tab(text: '发出 (${_state.sentRecommendations.length})'),
           ],
         ),
         actions: [
           IconButton(
             icon: Icon(_sendMode ? Icons.close : Icons.send),
-            onPressed: _sharedWardrobes.isEmpty ? null : () => setState(() => _sendMode = !_sendMode),
-            tooltip: '发送推荐',
+            onPressed: _state.currentClothes.isEmpty ? null : () => setState(() => _sendMode = !_sendMode),
+            tooltip: _sendMode ? '取消' : '推荐衣物',
           ),
         ],
       ),
@@ -64,7 +67,9 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
   }
 
   Widget _buildSendMode() {
+    // 第一步：选择目标衣柜
     if (_targetWardrobeId == null) {
+      final targets = _state.recommendableWardrobes;
       return Column(
         children: [
           Container(
@@ -74,35 +79,53 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
               children: [
                 Icon(Icons.info_outline, color: Color(0xFFB8860B)),
                 SizedBox(width: 8),
-                Expanded(child: Text('选择一个共享衣柜，从中挑选衣物推荐给对方', style: TextStyle(fontSize: 13))),
+                Expanded(child: Text('选择要推荐给哪个衣柜（共享衣柜）', style: TextStyle(fontSize: 13))),
               ],
             ),
           ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(10),
-              itemCount: _sharedWardrobes.length,
-              itemBuilder: (_, i) {
-                final w = _sharedWardrobes[i];
-                final count = _state.wardrobeData[w.id]?.clothes.length ?? 0;
-                return Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(backgroundColor: Color(0xFFB8860B), child: Icon(Icons.checkroom, color: Colors.white)),
-                    title: Text(w.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text('${w.owner} · $count 件衣物'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => setState(() => _targetWardrobeId = w.id),
-                  ),
-                );
-              },
+          if (targets.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.group_off, size: 60, color: Color(0xFFCCC0A8)),
+                    const SizedBox(height: 12),
+                    const Text('还没有可推荐的共享衣柜', style: TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 8),
+                    const Text('让对方创建一个共享衣柜，或把你的衣柜设为共享', style: TextStyle(fontSize: 12, color: Colors.black38, textAlign: TextAlign.center)),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(10),
+                itemCount: targets.length,
+                itemBuilder: (_, i) {
+                  final w = targets[i];
+                  final count = _state.wardrobeData[w.id]?.clothes.length ?? 0;
+                  return Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(backgroundColor: Color(0xFFB8860B), child: Icon(Icons.checkroom, color: Colors.white)),
+                      title: Text(w.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      subtitle: Text('${w.owner} · $count 件衣物${w.description.isNotEmpty ? "\n${w.description}" : ""}'),
+                      isThreeLine: w.description.isNotEmpty,
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => setState(() => _targetWardrobeId = w.id),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       );
     }
 
-    final targetData = _state.wardrobeData[_targetWardrobeId];
-    final clothes = targetData?.clothes ?? [];
+    // 第二步：从自己的衣柜选衣服
+    final targetW = _state.wardrobes.firstWhere((w) => w.id == _targetWardrobeId);
+    final myClothes = _state.currentClothes;
     return Column(
       children: [
         Container(
@@ -110,8 +133,21 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
           color: const Color(0xFFB8860B).withOpacity(0.1),
           child: Row(
             children: [
-              IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => setState(() { _targetWardrobeId = null; _selectedClotheIds.clear(); })),
-              Expanded(child: Text('从「${_state.wardrobes.firstWhere((w) => w.id == _targetWardrobeId).name}」选衣（${_selectedClotheIds.length}件）', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => setState(() {
+                  _targetWardrobeId = null;
+                }),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('推荐给「${targetW.name}」', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    Text('从你的「${_state.currentWardrobe?.name ?? ''}」选 ${_selectedClotheIds.length} 件衣物', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                  ],
+                ),
+              ),
               ElevatedButton(
                 onPressed: _selectedClotheIds.isEmpty ? null : _showRecommendMessageDialog,
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
@@ -120,39 +156,48 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
             ],
           ),
         ),
-        Expanded(
-          child: clothes.isEmpty
-              ? const Center(child: Text('这个衣柜还没有衣物', style: TextStyle(color: Colors.black45)))
-              : GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.7, crossAxisSpacing: 8, mainAxisSpacing: 8),
-                  itemCount: clothes.length,
-                  itemBuilder: (_, i) {
-                    final c = clothes[i];
-                    final selected = _selectedClotheIds.contains(c.id);
-                    return GestureDetector(
-                      onTap: () => setState(() {
-                        if (selected) _selectedClotheIds.remove(c.id);
-                        else _selectedClotheIds.add(c.id);
-                      }),
-                      child: Stack(
-                        children: [
-                          Card(
-                            clipBehavior: Clip.antiAlias,
-                            child: Column(
-                              children: [
-                                Expanded(child: c.imageUrl.isNotEmpty ? CachedNetworkImage(imageUrl: c.imageUrl, fit: BoxFit.cover, width: double.infinity) : Container(color: const Color(0xFFF0E8D8), width: double.infinity)),
-                                Padding(padding: const EdgeInsets.all(4), child: Text(c.name, style: const TextStyle(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                              ],
+        if (myClothes.isEmpty)
+          const Expanded(child: Center(child: Text('你的衣柜还没有衣物', style: TextStyle(color: Colors.black45))))
+        else
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(10),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.7, crossAxisSpacing: 8, mainAxisSpacing: 8),
+              itemCount: myClothes.length,
+              itemBuilder: (_, i) {
+                final c = myClothes[i];
+                final selected = _selectedClotheIds.contains(c.id);
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    if (selected) {
+                      _selectedClotheIds.remove(c.id);
+                    } else {
+                      _selectedClotheIds.add(c.id);
+                    }
+                  }),
+                  child: Stack(
+                    children: [
+                      Card(
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: c.imageUrl.isNotEmpty
+                                  ? CachedNetworkImage(imageUrl: c.imageUrl, fit: BoxFit.cover, width: double.infinity)
+                                  : Container(color: const Color(0xFFF0E8D8), width: double.infinity, child: const Center(child: Icon(Icons.checkroom, color: Colors.white30))),
                             ),
-                          ),
-                          if (selected) Positioned(top: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Color(0xFFB8860B), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 14))),
-                        ],
+                            Padding(padding: const EdgeInsets.all(4), child: Text(c.name, style: const TextStyle(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center)),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                ),
-        ),
+                      if (selected)
+                        Positioned(top: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Color(0xFFB8860B), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 14))),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -163,7 +208,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('写一句推荐语'),
-        content: TextField(controller: msgCtrl, decoration: const InputDecoration(labelText: '为什么推荐这套？'), maxLines: 3, autofocus: true),
+        content: TextField(controller: msgCtrl, decoration: const InputDecoration(labelText: '为什么推荐这套？（可选）', hintText: '比如：这件很适合你最近的风格~'), maxLines: 3, autofocus: true),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
           ElevatedButton(
@@ -176,7 +221,8 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                   _targetWardrobeId = null;
                   _selectedClotheIds.clear();
                 });
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('推荐已发送')));
+                _tabController.animateTo(1); // 切换到"发出"tab
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('推荐已发送，对方会收到通知')));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB8860B)),
@@ -196,11 +242,12 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
             Icon(isReceived ? Icons.inbox : Icons.send, size: 60, color: const Color(0xFFCCC0A8)),
             const SizedBox(height: 12),
             Text(isReceived ? '还没有收到推荐' : '还没有发出推荐', style: const TextStyle(color: Colors.black45)),
-            if (isReceived && _sharedWardrobes.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: TextButton.icon(onPressed: () => setState(() => _sendMode = true), icon: const Icon(Icons.send), label: const Text('去给TA推荐')),
-              ),
+            if (isReceived) ...[
+              const SizedBox(height: 8),
+              const Text('点击右上角发送按钮，给TA推荐衣物', style: TextStyle(fontSize: 12, color: Colors.black38)),
+              const SizedBox(height: 12),
+              TextButton.icon(onPressed: () => setState(() => _sendMode = true), icon: const Icon(Icons.send), label: const Text('去推荐')),
+            ],
           ],
         ),
       );
@@ -211,7 +258,9 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
       itemBuilder: (_, i) {
         final rec = recs[i];
         final targetW = _state.wardrobes.cast<Wardrobe?>().firstWhere((w) => w?.id == rec.toWardrobeId, orElse: () => null);
-        final clothes = rec.clotheIds.map((id) => _state.findClothe(rec.toWardrobeId, id)).whereType<Clothe>().toList();
+        // 推荐的衣物来自发送者的衣柜
+        final fromWardrobe = _state.wardrobes.cast<Wardrobe?>().firstWhere((w) => w?.owner == rec.fromUser, orElse: () => null);
+        final clothes = rec.clotheIds.map((id) => _state.findClothe(fromWardrobe?.id ?? '', id)).whereType<Clothe>().toList();
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: Padding(
@@ -232,20 +281,27 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
                   Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFFFAF6F0), borderRadius: BorderRadius.circular(8)), child: Text(rec.message, style: const TextStyle(fontSize: 13, height: 1.4))),
                 ],
                 const SizedBox(height: 10),
-                SizedBox(
-                  height: 70,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: clothes.length,
-                    itemBuilder: (_, j) {
-                      final c = clothes[j];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ClipRRect(borderRadius: BorderRadius.circular(8), child: c.imageUrl.isNotEmpty ? CachedNetworkImage(imageUrl: c.imageUrl, width: 56, height: 56, fit: BoxFit.cover) : Container(width: 56, height: 56, color: const Color(0xFFF0E8D8), child: const Icon(Icons.checkroom, color: Colors.white30, size: 20))),
-                      );
-                    },
+                if (clothes.isNotEmpty)
+                  SizedBox(
+                    height: 70,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: clothes.length,
+                      itemBuilder: (_, j) {
+                        final c = clothes[j];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Column(
+                            children: [
+                              ClipRRect(borderRadius: BorderRadius.circular(8), child: c.imageUrl.isNotEmpty ? CachedNetworkImage(imageUrl: c.imageUrl, width: 56, height: 56, fit: BoxFit.cover) : Container(width: 56, height: 56, color: const Color(0xFFF0E8D8), child: const Icon(Icons.checkroom, color: Colors.white30, size: 20))),
+                              const SizedBox(height: 2),
+                              SizedBox(width: 56, child: Text(c.name, style: const TextStyle(fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
                 const SizedBox(height: 8),
                 Text(DateFormat('yyyy-MM-dd HH:mm').format(rec.createdAt), style: const TextStyle(fontSize: 11, color: Colors.black38)),
                 if (isReceived && rec.status == 'pending') ...[
@@ -291,7 +347,7 @@ class _RecommendScreenState extends State<RecommendScreen> with SingleTickerProv
           ElevatedButton(
             onPressed: () async {
               await _state.respondRecommendation(rec.id, 'accepted', outfitDate: dateCtrl.text);
-              // 同时添加穿搭记录
+              // 同时添加穿搭记录到当前衣柜
               await _state.addOutfit(dateCtrl.text, rec.clotheIds, '来自 ${rec.fromUser} 的推荐');
               if (mounted) {
                 Navigator.pop(ctx);
