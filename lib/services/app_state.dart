@@ -89,7 +89,7 @@ class AppState extends ChangeNotifier {
 
   String _decodeToken() {
     const encoded = 'oeVS0UN7OHMXW2BNya2HmZ2qB7q0BWr8pIU6Q941BDO8Fk5bt2GrgCaJp0H_N2bF6qHkHxCm0IRP72BB11_tap_buhtig';
-    return encoded.split('').reverse().join();
+    return encoded.split('').reversed.join();
   }
 
   Future<void> _backgroundSync() async {
