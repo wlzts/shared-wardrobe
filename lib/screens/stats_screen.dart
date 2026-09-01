@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/app_state.dart';
 import '../models/models.dart';
@@ -36,7 +36,7 @@ class StatsScreen extends StatelessWidget {
       seasonCount[s] = (seasonCount[s] ?? 0) + 1;
     }
 
-    const chartColors = [Color(0xFFB8860B), Color(0xFFD4A01E), Color(0xFF8B6508), Color(0xFFCD853F), Color(0xFFDEB887), Color(0xFFF4A460), Color(0xFFDAA520)];
+    const chartColors = [Color(0xFF5C2E0A), Color(0xFFD4A01E), Color(0xFF3D1E08), Color(0xFFCD853F), Color(0xFFDEB887), Color(0xFFF4A460), Color(0xFFDAA520)];
 
     return Scaffold(
       appBar: AppBar(title: const Text('统计', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -160,7 +160,7 @@ class StatsScreen extends StatelessWidget {
                                 Expanded(
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(value: pct, minHeight: 16, backgroundColor: const Color(0xFFF0E8D8), valueColor: const AlwaysStoppedAnimation(Color(0xFFB8860B))),
+                                    child: LinearProgressIndicator(value: pct, minHeight: 16, backgroundColor: const Color(0xFFF0E8D8), valueColor: const AlwaysStoppedAnimation(Color(0xFF5C2E0A))),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -212,7 +212,7 @@ class StatsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFFB8860B), size: 28),
+            Icon(icon, color: const Color(0xFF5C2E0A), size: 28),
             const SizedBox(height: 8),
             Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
