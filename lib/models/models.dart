@@ -178,7 +178,7 @@ class WardrobeData {
   final String wardrobeId;
   final List<Clothe> clothes;
   final List<Outfit> outfits;
-  final DateTime lastUpdated;
+  DateTime lastUpdated;
 
   WardrobeData({
     required this.wardrobeId,
